@@ -1,0 +1,14 @@
+/.venv
+/venv
+.DS_Store
+Thumbs.db
+__Pycache__
+*.__pyc
+.coverage
+.coverage.*
+db.sqlite3
+
+#Elastic Beanstalk files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
