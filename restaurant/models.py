@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Article(models.Model):
+    id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=100, db_index=True)
     preview_image = models.ImageField(upload_to="article", null=True, blank=True)
     content = models.TextField()
@@ -9,6 +10,13 @@ class Article(models.Model):
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "칼럼"
+        verbose_name_plural = "칼럼"
+
+    def __str__(self):
+        return f"{self.id} - {self.title}"
 
 
 class Restaurant(models.Model):
@@ -37,6 +45,13 @@ class Restaurant(models.Model):
         "RestaurantCategory", on_delete=models.SET_NULL, blank=True, null=True
     )
     tags = models.ManyToManyField("Tag", blank=True)
+
+    class Meta:
+        verbose_name = "레스토랑"
+        verbose_name_plural = "레스토랑"
+
+    def __str__(self):
+        return f"{self.name}{self.branch_name}"
 
 
 class CuisineType(models.Model):
