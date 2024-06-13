@@ -1,4 +1,6 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.forms import ValidationError
 
 
 class Article(models.Model):
@@ -21,7 +23,7 @@ class Article(models.Model):
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=100, db_index=True)
-    branch_name = models.CharField(max_length=100, db_index=True)
+    branch_name = models.CharField(max_length=100, db_index=True, null=True, blank=True)
     address = models.CharField(max_length=255, db_index=True)
     feature = models.CharField(max_length=255, db_index=True)  # 특징
     is_closed = models.BooleanField(default=False)  # 폐업여부
@@ -29,13 +31,17 @@ class Restaurant(models.Model):
         max_digits=16,
         decimal_places=12,
         db_index=True,
+        default="0.000",
     )
     longitude = models.DecimalField(
         max_digits=16,
         decimal_places=12,
         db_index=True,
+        default="0.000",
     )
-    phone = models.CharField(max_length=16, help_text="E.164 포맷")
+    phone = models.CharField(
+        max_length=16, help_text="E.164 포맷", blank=True, null=True
+    )
     rating = models.DecimalField(max_digits=3, decimal_places=2, default="0.0")
     rating_count = models.PositiveIntegerField(default=0)
     start_time = models.TimeField(null=True, blank=True)
@@ -106,20 +112,37 @@ class RestaurantMenu(models.Model):
 
 
 class Review(models.Model):
-    title = models.CharField(max_length=100)
-    author = models.CharField(max_length=100)
-    content = models.TextField()
+    title = models.CharField("제목", max_length=100)
+    author = models.CharField("작성자", max_length=100)
+    profile_image = models.ImageField(
+        "프로필 이미지", upload_to="review-profile", blank=True, null=True
+    )
+    content = models.TextField("내용")
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     social_channel = models.ForeignKey(
         "SocialChannel", on_delete=models.SET_NULL, blank=True, null=True
     )
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    created_at = models.DateTimeField("생성일", auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField("수정일", auto_now=True, db_index=True)
 
     class Meta:
         verbose_name = "리뷰"
         verbose_name_plural = "리뷰"
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.author}:{self.title}"
+
+    @property
+    def restaurant_name(self):
+        return self.restaurant.name
+
+    @property
+    def content_partial(self):
+        return self.content[:20]
 
 
 class ReviewImage(models.Model):
@@ -133,6 +156,9 @@ class ReviewImage(models.Model):
         verbose_name = "리뷰이미지"
         verbose_name_plural = "리뷰이미지"
 
+    def __str__(self):
+        return f"{self.id}:{self.image}"
+
 
 class SocialChannel(models.Model):
     name = models.CharField("이름", max_length=100)
@@ -141,6 +167,9 @@ class SocialChannel(models.Model):
         verbose_name = "소셜채널"
         verbose_name_plural = "소셜채널"
 
+    def __str__(self):
+        return self.name
+
 
 class Tag(models.Model):
     name = models.CharField("이름", max_length=100)
@@ -148,3 +177,6 @@ class Tag(models.Model):
     class Meta:
         verbose_name = "태그"
         verbose_name_plural = "태그"
+
+    def __str__(self) -> str:
+        return self.name
